@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calisthenics Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f7;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            color: #1d1d1f;
+            margin-bottom: 10px;
+        }
+        
+        .date {
+            color: #86868b;
+            font-size: 14px;
+        }
+        
+        .session-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: white;
+            border: 2px solid #e5e5e7;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            background: #007aff;
+            color: white;
+            border-color: #007aff;
+        }
+        
+        .exercise {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .exercise-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 5px;
+        }
+        
+        .exercise-target {
+            font-size: 13px;
+            color: #86868b;
+            margin-bottom: 10px;
+        }
+        
+        .sets-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .set-input {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .set-label {
+            font-size: 14px;
+            color: #86868b;
+            min-width: 45px;
+        }
+        
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #e5e5e7;
+            border-radius: 8px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #007aff;
+        }
+        
+        .save-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #34c759;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+        }
+        
+        .save-btn:active {
+            transform: scale(0.98);
+        }
+        
+        .history-btn {
+            background: white;
+            color: #007aff;
+            border: 2px solid #007aff;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        
+        .export-btn {
+            background: #007aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 40px auto;
+            max-width: 600px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-btn {
+            font-size: 28px;
+            color: #86868b;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+        
+        .history-entry {
+            background: #f5f5f7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .history-date {
+            font-weight: 600;
+            color: #1d1d1f;
+            margin-bottom: 10px;
+        }
+        
+        .history-exercise {
+            font-size: 14px;
+            color: #86868b;
+            margin-bottom: 5px;
+        }
+        
+        .success-message {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: #34c759;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+            z-index: 2000;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>💪 Workout Tracker</h1>
+        <div class="date" id="currentDate"></div>
+    </div>
+    
+    <button class="history-btn" onclick="showHistory()">View History</button>
+    
+    <div class="session-tabs">
+        <button class="tab active" onclick="switchSession('A')">Session A</button>
+        <button class="tab" onclick="switchSession('B')">Session B</button>
+    </div>
+    
+    <div id="sessionA">
+        <!-- Ring Push-ups -->
+        <div class="exercise">
+            <div class="exercise-name">Ring Push-ups</div>
+            <div class="exercise-target">Target: 8-12 reps per set</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Reps" id="a-ringpush-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Reps" id="a-ringpush-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Reps" id="a-ringpush-3">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pike Push-ups -->
+        <div class="exercise">
+            <div class="exercise-name">Pike Push-ups</div>
+            <div class="exercise-target">Target: 6-10 reps per set</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Reps" id="a-pike-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Reps" id="a-pike-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Reps" id="a-pike-3">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulgarian Split Squats -->
+        <div class="exercise">
+            <div class="exercise-name">Bulgarian Split Squats</div>
+            <div class="exercise-target">Target: 8-10 reps per leg</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Per leg" id="a-bulgarian-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Per leg" id="a-bulgarian-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Per leg" id="a-bulgarian-3">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hollow Body Hold -->
+        <div class="exercise">
+            <div class="exercise-name">Hollow Body Hold</div>
+            <div class="exercise-target">Target: 20-30 seconds per set</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Seconds" id="a-hollow-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Seconds" id="a-hollow-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Seconds" id="a-hollow-3">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Handstand Practice -->
+        <div class="exercise">
+            <div class="exercise-name">Handstand Hold</div>
+            <div class="exercise-target">Target: 20-30 seconds per set</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Seconds" id="a-handstand-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Seconds" id="a-handstand-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Seconds" id="a-handstand-3">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="sessionB" class="hidden">
+        <!-- Pull-ups -->
+        <div class="exercise">
+            <div class="exercise-name">Pull-ups</div>
+            <div class="exercise-target">Target: 6-8 reps per set</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Reps" id="b-pullup-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Reps" id="b-pullup-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Reps" id="b-pullup-3">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ring Rows -->
+        <div class="exercise">
+            <div class="exercise-name">Ring Rows</div>
+            <div class="exercise-target">Target: 10-12 reps per set</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Reps" id="b-ringrow-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Reps" id="b-ringrow-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Reps" id="b-ringrow-3">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Single-leg RDL -->
+        <div class="exercise">
+            <div class="exercise-name">Single-leg RDL</div>
+            <div class="exercise-target">Target: 8-10 reps per leg</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Per leg" id="b-rdl-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Per leg" id="b-rdl-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Per leg" id="b-rdl-3">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ring Plank -->
+        <div class="exercise">
+            <div class="exercise-name">Ring Plank Hold</div>
+            <div class="exercise-target">Target: 30-40 seconds per set</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Set 1:</span>
+                    <input type="number" placeholder="Seconds" id="b-plank-1">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 2:</span>
+                    <input type="number" placeholder="Seconds" id="b-plank-2">
+                </div>
+                <div class="set-input">
+                    <span class="set-label">Set 3:</span>
+                    <input type="number" placeholder="Seconds" id="b-plank-3">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Deep Squat Hold -->
+        <div class="exercise">
+            <div class="exercise-name">Deep Squat Hold</div>
+            <div class="exercise-target">Target: 2 minutes total (can break up)</div>
+            <div class="sets-container">
+                <div class="set-input">
+                    <span class="set-label">Total:</span>
+                    <input type="number" placeholder="Seconds" id="b-squat-1">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <button class="save-btn" onclick="saveWorkout()">Save Workout</button>
+    
+    <div class="success-message" id="successMessage">
+        ✓ Workout Saved!
+    </div>
+    
+    <!-- History Modal -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Workout History</h2>
+                <button class="close-btn" onclick="closeHistory()">&times;</button>
+            </div>
+            <div id="historyContent"></div>
+            <button class="export-btn" onclick="exportData()">📥 Export Data (JSON)</button>
+        </div>
+    </div>
+    
+    <script>
+        let currentSession = 'A';
+        
+        // Display current date
+        document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        function switchSession(session) {
+            currentSession = session;
+            
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show/hide sessions
+            document.getElementById('sessionA').classList.toggle('hidden', session !== 'A');
+            document.getElementById('sessionB').classList.toggle('hidden', session !== 'B');
+        }
+        
+        function saveWorkout() {
+            const session = currentSession;
+            const date = new Date().toISOString();
+            
+            // Get all inputs for current session
+            const inputs = document.querySelectorAll(`#session${session} input`);
+            const data = {};
+            
+            inputs.forEach(input => {
+                if (input.value) {
+                    data[input.id] = input.value;
+                }
+            });
+            
+            // Check if any data was entered
+            if (Object.keys(data).length === 0) {
+                alert('Please enter at least one value before saving.');
+                return;
+            }
+            
+            // Get existing workouts
+            const workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+            
+            // Add new workout
+            workouts.push({
+                session,
+                date,
+                data
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('workouts', JSON.stringify(workouts));
+            
+            // Clear inputs
+            inputs.forEach(input => input.value = '');
+            
+            // Show success message
+            const msg = document.getElementById('successMessage');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 2000);
+        }
+        
+        function showHistory() {
+            const workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+            const content = document.getElementById('historyContent');
+            
+            if (workouts.length === 0) {
+                content.innerHTML = '<p style="text-align: center; color: #86868b;">No workouts recorded yet.</p>';
+            } else {
+                content.innerHTML = workouts
+                    .reverse()
+                    .map(workout => {
+                        const date = new Date(workout.date).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                        
+                        const exercises = Object.entries(workout.data)
+                            .map(([key, value]) => {
+                                const exerciseName = key.split('-')[1];
+                                return `<div class="history-exercise">${exerciseName}: ${value}</div>`;
+                            })
+                            .join('');
+                        
+                        return `
+                            <div class="history-entry">
+                                <div class="history-date">Session ${workout.session} - ${date}</div>
+                                ${exercises}
+                            </div>
+                        `;
+                    })
+                    .join('');
+            }
+            
+            document.getElementById('historyModal').style.display = 'block';
+        }
+        
+        function closeHistory() {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+        
+        function exportData() {
+            const workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+            
+            if (workouts.length === 0) {
+                alert('No workout data to export yet.');
+                return;
+            }
+            
+            // Create a formatted JSON with metadata
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                totalWorkouts: workouts.length,
+                workouts: workouts
+            };
+            
+            // Create blob and download
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `workout-history-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // Show success
+            const msg = document.getElementById('successMessage');
+            msg.textContent = '✓ Data Exported!';
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+                msg.textContent = '✓ Workout Saved!';
+            }, 2000);
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('historyModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
